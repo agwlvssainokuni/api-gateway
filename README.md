@@ -1,16 +1,71 @@
 # API Gateway
-Spring Cloud Gatewayを利用したAPI Gatewayの実装例。
+[Spring Cloud Gateway](https://spring.io/projects/spring-cloud-gateway) を利用した API Gateway の実装例。
+
+## 概要
+* API Gateway のポート番号は `8090`。
+* 実APIは [httpbin.org](http://httpbin.org/) をコンテナ起動。ポート番号は `8081`。
+* 認証プロバイダとして [Keycloak](https://www.keycloak.org/) をコンテナ起動。ポート番号は `8080`。
+* API呼出し時の認可処理 (JWT検証) を Spring Security の「[OAuth2 Resource Server](https://docs.spring.io/spring-security/reference/reactive/oauth2/resource-server/index.html)]」の機能により実装する。
+* アクセストークン(JWT)に格納されるクレーム値をHTTPリクエストヘッダとして実APIへ受け渡す。
+
+
+## API Gatewayの構成のポイント
+### 認証プロバイダ設定
+```
+spring.security.oauth2.resourceserver.jwt.issuer-uri=http://localhost:8080/auth/realms/mydemo
+```
+
+### 実APIへのルーティング設定
+```
+spring.cloud.gateway.routes[0].id=prvapi
+spring.cloud.gateway.routes[0].uri=http://localhost:8081/
+spring.cloud.gateway.routes[0].predicates[0]=Path=/prvapi/**
+spring.cloud.gateway.routes[0].filters[0]=RewritePath=/prvapi/?(?<segment>.*), /$\{segment}
+spring.cloud.gateway.routes[0].filters[1]=RemoveRequestHeader=Authorization
+spring.cloud.gateway.routes[0].filters[2]=AddRequestHeaderFromJwt=X-JWT-SUB, sub
+
+spring.cloud.gateway.routes[1].id=pubapi
+spring.cloud.gateway.routes[1].uri=http://localhost:8081/
+spring.cloud.gateway.routes[1].predicates[0]=Path=/pubapi/**
+spring.cloud.gateway.routes[1].filters[0]=RewritePath=/pubapi/?(?<segment>.*), /$\{segment}
+spring.cloud.gateway.routes[1].filters[1]=RemoveRequestHeader=Authorization
+spring.cloud.gateway.routes[1].filters[2]=AddRequestHeaderFromJwt=X-JWT-SUB, sub
+```
+
+### クレーム値を実APIへ受け渡す `GatewayFilterFactory`
+```Java
+return (exchange, chain) -> ReactiveSecurityContextHolder.getContext()
+        // JWTクレームを取得する。
+        .map(SecurityContext::getAuthentication).map(Authentication::getPrincipal)
+        .filter(Jwt.class::isInstance).map(Jwt.class::cast)
+        .map(jwt -> jwt.getClaimAsString(config.getClaim()))
+        // JWTクレームをリクエストヘッダへ設定する。
+        .flatMap(claim -> Mono.just(exchange).map(ServerWebExchange::getRequest)
+                .map(ServerHttpRequest::mutate)
+                .map(req -> req.header(config.getHeader(), claim))
+                .map(ServerHttpRequest.Builder::build))
+        // リクエストを更新する。
+        .flatMap(req -> Mono.just(exchange)
+                .map(ServerWebExchange::mutate)
+                .map(exchg -> exchg.request(req))
+                .map(ServerWebExchange.Builder::build))
+        // JWTクレームが存在しない場合はリクエストを更新しない。
+        .switchIfEmpty(Mono.just(exchange))
+        // フィルタ処理を進める。
+        .flatMap(chain::filter);
+```
+
 
 # 準備
-## 動作確認用コンテナ(KeyCloak, httpbin.org)を起動する
+## 動作確認用コンテナ(Keycloak, httpbin.org)を起動する
 ```
 cd docker
 docker compose up -d
 ```
 
-## KeyCloakを初期設定する
+## Keycloakを初期設定する
 ### ログイン
-* [KeyCloak(http://localhost:8080/auth/)](http://localhost:8080/auth/) を開く。
+* [Keycloak(http://localhost:8080/auth/)](http://localhost:8080/auth/) を開く。
 * 管理コンソール (Administration Console) のリンクをクリックする。
 * ログインする。(`admin/password`)
 
@@ -31,9 +86,9 @@ docker compose up -d
 * ユーザ `user001` にパスワードを設定する。
 
 ### ログアウト
-* KeyCloakからログアウトする。
+* Keycloakからログアウトする。
 
-## 動作確認用コンテナ(KeyCloak, httpbin.org)を停止する
+## 動作確認用コンテナ(Keycloak, httpbin.org)を停止する
 ```
 cd docker
 docker compose down
@@ -41,7 +96,7 @@ docker compose down
 
 
 # 実行
-## 動作確認用コンテナ(KeyCloak, httpbin.org)を起動する
+## 動作確認用コンテナ(Keycloak, httpbin.org)を起動する
 ```
 cd docker
 docker compose up -d
@@ -55,7 +110,7 @@ docker compose up -d
 ## アクセストークンを発行する
 ```
 clientid=cloudgateway
-clientsecret={KeyCloakの画面で確認したクライアントシークレット}
+clientsecret={Keycloakの画面で確認したクライアントシークレット}
 username=user001
 password={user001のパスワード}
 
@@ -284,7 +339,7 @@ $ curl -v http://localhost:8090/prvapi/anything -H "Authorization: Bearer ${toke
 * Closing connection 0
 ```
 
-## 動作確認用コンテナ(KeyCloak, httpbin.org)を停止する
+## 動作確認用コンテナ(Keycloak, httpbin.org)を停止する
 ```
 cd docker
 docker compose down
@@ -292,7 +347,7 @@ docker compose down
 
 
 # 補足
-## ゲートウェイのアクセスログ
+## API Gatewayのアクセスログ
 * システムプロパティ `-Dreactor.netty.http.server.accessLogEnabled=true` を設定して起動すると Spring Cloud Gatewayのアクセスログが出力される。([Spring Cloud Gateway - 13. Reactor Netty Access Logs](https://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/#reactor-netty-access-logs))
 
 ```
