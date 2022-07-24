@@ -10,6 +10,10 @@ targetCompatibility = 17
 compileJava.options.encoding = "UTF-8"
 compileTestJava.options.encoding = "UTF-8"
 
+springBoot {
+    mainClass = "cherry.apigateway.Main"
+}
+
 test {
     useJUnitPlatform()
 }
@@ -32,7 +36,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-webflux"
     implementation "org.springframework.boot:spring-boot-starter-security"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+    implementation "org.springframework.cloud:spring-cloud-starter-gateway"
     runtimeOnly "org.springframework.boot:spring-boot-starter-aop"
-    runtimeOnly "org.springframework.cloud:spring-cloud-starter-gateway"
     testImplementation "org.springframework.boot:spring-boot-starter-test"
 }
