@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Launch Main",
+            "request": "launch",
+            "vmArgs": [
+                "-Dreactor.netty.http.server.accessLogEnabled=true"
+            ],
+            "mainClass": "cherry.apigateway.Main",
+            "projectName": "api-gateway"
+        }
+    ]
+}

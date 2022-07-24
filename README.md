@@ -277,7 +277,7 @@ $ curl -v http://localhost:8090/prvapi/anything -H "Authorization: Bearer ${toke
 
 # 補足
 ## ゲートウェイのアクセスログ
-* システムプロパティ `-Dreactor.netty.http.server.accessLogEnabled=true` を設定して起動すると Spring Cloud Gatewayのアクセスログが出力される。
+* システムプロパティ `-Dreactor.netty.http.server.accessLogEnabled=true` を設定して起動すると Spring Cloud Gatewayのアクセスログが出力される。([Spring Cloud Gateway - 13. Reactor Netty Access Logs](https://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/#reactor-netty-access-logs))
 
 ```
 ./gradlew clean build
