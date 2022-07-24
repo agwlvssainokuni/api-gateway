@@ -11,3 +11,8 @@ services:
       - KEYCLOAK_PASSWORD=password
     volumes:
       - ./data:/opt/jboss/keycloak/standalone/data
+  httpbin:
+    image: kennethreitz/httpbin
+    container_name: httpbin
+    ports:
+      - '8081:80'

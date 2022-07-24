@@ -2,9 +2,9 @@
 Spring Cloud Gatewayを利用したAPI Gatewayの実装例。
 
 # 準備
-## KeyCloakを起動する
+## 動作確認用コンテナ(KeyCloak, httpbin.org)を起動する
 ```
-cd keycloak
+cd docker
 docker compose up -d
 ```
 
@@ -33,8 +33,20 @@ docker compose up -d
 ### ログアウト
 * KeyCloakからログアウトする。
 
+## 動作確認用コンテナ(KeyCloak, httpbin.org)を停止する
+```
+cd docker
+docker compose down
+```
+
 
 # 実行
+## 動作確認用コンテナ(KeyCloak, httpbin.org)を起動する
+```
+cd docker
+docker compose up -d
+```
+
 ## API Gatewayを起動する
 ```
 ./gradlew clean bootRun
@@ -81,12 +93,12 @@ $ curl -v http://localhost:8090/pubapi/anything
 < Vary: Origin
 < Vary: Access-Control-Request-Method
 < Vary: Access-Control-Request-Headers
-< Date: Sun, 24 Jul 2022 11:33:54 GMT
-< Content-Type: application/json
 < Server: gunicorn/19.9.0
+< Date: Sun, 24 Jul 2022 13:13:45 GMT
+< Content-Type: application/json
 < Access-Control-Allow-Origin: *
 < Access-Control-Allow-Credentials: true
-< content-length: 560
+< content-length: 479
 < Cache-Control: no-cache, no-store, max-age=0, must-revalidate
 < Pragma: no-cache
 < Expires: 0
@@ -103,16 +115,15 @@ $ curl -v http://localhost:8090/pubapi/anything
   "headers": {
     "Accept": "*/*", 
     "Content-Length": "0", 
-    "Forwarded": "proto=http;host=\"localhost:8090\";for=\"[0:0:0:0:0:0:0:1]:55092\"", 
-    "Host": "httpbin.org", 
+    "Forwarded": "proto=http;host=\"localhost:8090\";for=\"[0:0:0:0:0:0:0:1]:55777\"", 
+    "Host": "localhost:8081", 
     "User-Agent": "curl/7.64.1", 
-    "X-Amzn-Trace-Id": "Root=1-62dd2e22-5c0047d1559ff93d3d42f847", 
     "X-Forwarded-Host": "localhost:8090", 
     "X-Forwarded-Prefix": "/pubapi"
   }, 
   "json": null, 
   "method": "GET", 
-  "origin": "0:0:0:0:0:0:0:1, 227.227.227.227", 
+  "origin": "0:0:0:0:0:0:0:1", 
   "url": "http://localhost:8090/anything"
 }
 * Connection #0 to host localhost left intact
@@ -141,12 +152,12 @@ $ curl -v http://localhost:8090/pubapi/anything -H "Authorization: Bearer ${toke
 < Vary: Origin
 < Vary: Access-Control-Request-Method
 < Vary: Access-Control-Request-Headers
-< Date: Sun, 24 Jul 2022 11:34:51 GMT
-< Content-Type: application/json
 < Server: gunicorn/19.9.0
+< Date: Sun, 24 Jul 2022 13:14:52 GMT
+< Content-Type: application/json
 < Access-Control-Allow-Origin: *
 < Access-Control-Allow-Credentials: true
-< content-length: 618
+< content-length: 537
 < Cache-Control: no-cache, no-store, max-age=0, must-revalidate
 < Pragma: no-cache
 < Expires: 0
@@ -163,17 +174,16 @@ $ curl -v http://localhost:8090/pubapi/anything -H "Authorization: Bearer ${toke
   "headers": {
     "Accept": "*/*", 
     "Content-Length": "0", 
-    "Forwarded": "proto=http;host=\"localhost:8090\";for=\"[0:0:0:0:0:0:0:1]:55099\"", 
-    "Host": "httpbin.org", 
+    "Forwarded": "proto=http;host=\"localhost:8090\";for=\"[0:0:0:0:0:0:0:1]:55803\"", 
+    "Host": "localhost:8081", 
     "User-Agent": "curl/7.64.1", 
-    "X-Amzn-Trace-Id": "Root=1-62dd2e5b-06349e5c28bc8ee87a85a609", 
     "X-Forwarded-Host": "localhost:8090", 
     "X-Forwarded-Prefix": "/pubapi", 
     "X-Jwt-Sub": "b16d2eb5-901c-4d80-ae1e-2ea99f9df931"
   }, 
   "json": null, 
   "method": "GET", 
-  "origin": "0:0:0:0:0:0:0:1, 227.227.227.227", 
+  "origin": "0:0:0:0:0:0:0:1", 
   "url": "http://localhost:8090/anything"
 }
 * Connection #0 to host localhost left intact
@@ -236,12 +246,12 @@ $ curl -v http://localhost:8090/prvapi/anything -H "Authorization: Bearer ${toke
 < Vary: Origin
 < Vary: Access-Control-Request-Method
 < Vary: Access-Control-Request-Headers
-< Date: Sun, 24 Jul 2022 11:36:11 GMT
-< Content-Type: application/json
 < Server: gunicorn/19.9.0
+< Date: Sun, 24 Jul 2022 13:16:20 GMT
+< Content-Type: application/json
 < Access-Control-Allow-Origin: *
 < Access-Control-Allow-Credentials: true
-< content-length: 618
+< content-length: 537
 < Cache-Control: no-cache, no-store, max-age=0, must-revalidate
 < Pragma: no-cache
 < Expires: 0
@@ -258,22 +268,28 @@ $ curl -v http://localhost:8090/prvapi/anything -H "Authorization: Bearer ${toke
   "headers": {
     "Accept": "*/*", 
     "Content-Length": "0", 
-    "Forwarded": "proto=http;host=\"localhost:8090\";for=\"[0:0:0:0:0:0:0:1]:55107\"", 
-    "Host": "httpbin.org", 
+    "Forwarded": "proto=http;host=\"localhost:8090\";for=\"[0:0:0:0:0:0:0:1]:55813\"", 
+    "Host": "localhost:8081", 
     "User-Agent": "curl/7.64.1", 
-    "X-Amzn-Trace-Id": "Root=1-62dd2eab-4f34983617912c9a795d2a6f", 
     "X-Forwarded-Host": "localhost:8090", 
     "X-Forwarded-Prefix": "/prvapi", 
     "X-Jwt-Sub": "b16d2eb5-901c-4d80-ae1e-2ea99f9df931"
   }, 
   "json": null, 
   "method": "GET", 
-  "origin": "0:0:0:0:0:0:0:1, 227.227.227.227", 
+  "origin": "0:0:0:0:0:0:0:1", 
   "url": "http://localhost:8090/anything"
 }
 * Connection #0 to host localhost left intact
 * Closing connection 0
 ```
+
+## 動作確認用コンテナ(KeyCloak, httpbin.org)を停止する
+```
+cd docker
+docker compose down
+```
+
 
 # 補足
 ## ゲートウェイのアクセスログ
