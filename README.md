@@ -59,7 +59,7 @@ return (exchange, chain) -> ReactiveSecurityContextHolder.getContext()
 # 準備
 ## 動作確認用コンテナ(Keycloak, httpbin.org)を起動する
 ```
-cd docker
+cd server
 docker compose up -d
 ```
 
@@ -90,7 +90,7 @@ docker compose up -d
 
 ## 動作確認用コンテナ(Keycloak, httpbin.org)を停止する
 ```
-cd docker
+cd server
 docker compose down
 ```
 
@@ -98,7 +98,7 @@ docker compose down
 # 実行
 ## 動作確認用コンテナ(Keycloak, httpbin.org)を起動する
 ```
-cd docker
+cd server
 docker compose up -d
 ```
 
@@ -341,7 +341,7 @@ $ curl -v http://localhost:8090/prvapi/anything -H "Authorization: Bearer ${toke
 
 ## 動作確認用コンテナ(Keycloak, httpbin.org)を停止する
 ```
-cd docker
+cd server
 docker compose down
 ```
 

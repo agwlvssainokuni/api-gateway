@@ -2,7 +2,6 @@ version: '3'
 services:
   keycloak:
     image: jboss/keycloak
-    container_name: keycloak
     ports:
       - '8080:8080'
     environment:
@@ -13,6 +12,5 @@ services:
       - ./data:/opt/jboss/keycloak/standalone/data
   httpbin:
     image: kennethreitz/httpbin
-    container_name: httpbin
     ports:
       - '8081:80'
