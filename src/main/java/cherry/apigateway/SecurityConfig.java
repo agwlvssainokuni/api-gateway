@@ -16,21 +16,30 @@
 
 package cherry.apigateway;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.authentication.ReactiveAuthenticationManagerResolver;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import org.springframework.web.server.ServerWebExchange;
 
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
 	@Bean
-	public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http) throws Exception {
+	public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http,
+			@Autowired(required = false) ReactiveAuthenticationManagerResolver<ServerWebExchange> resolver)
+			throws Exception {
 
 		http.oauth2ResourceServer(oauth2 -> {
-			oauth2.jwt();
+			if (resolver == null) {
+				oauth2.jwt();
+			} else {
+				oauth2.authenticationManagerResolver(resolver);
+			}
 		});
 
 		http.cors(cors -> {
