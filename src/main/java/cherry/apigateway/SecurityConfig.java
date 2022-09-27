@@ -18,12 +18,11 @@ package cherry.apigateway;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.ReactiveAuthenticationManagerResolver;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.server.ServerWebExchange;
 
 @EnableWebFluxSecurity
@@ -42,16 +41,17 @@ public class SecurityConfig {
 			}
 		});
 
-		http.cors(cors -> {
-			CorsConfiguration corsConfiguration = new CorsConfiguration();
-			corsConfiguration.applyPermitDefaultValues();
-			UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-			source.registerCorsConfiguration("/prvapi/**", corsConfiguration);
-			source.registerCorsConfiguration("/pubapi/**", corsConfiguration);
-			cors.configurationSource(source);
-		});
-
 		http.authorizeExchange(authz -> {
+
+			// CORSはSpring Cloud Gatewayのglobalcors設定で処理することとする。
+			// そのためにSpring SecurityがOPTIONSメソッドをスルーするよう構成する。
+			// (前段のSpring Securityはアクセス許可し、後段のSpring Cloud Gateway
+			// で処理する)
+			// Spring SecurityはSpring Cloud Gatewayよりも前段階で実行されるため
+			// この構成がないと「Spring Cloud Gatewayへ到達する前にSpring Security
+			// によりアクセス拒否される」ことがありうる。
+			authz.pathMatchers(HttpMethod.OPTIONS).permitAll();
+
 			authz.pathMatchers("/prvapi/**")
 					.authenticated();
 			authz.pathMatchers("/pubapi/**")
