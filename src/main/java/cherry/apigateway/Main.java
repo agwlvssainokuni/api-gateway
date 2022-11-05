@@ -18,7 +18,6 @@ package cherry.apigateway;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ConfigurableApplicationContext;
 
 @SpringBootApplication
 public class Main {
@@ -28,7 +27,7 @@ public class Main {
 	}
 
 	public static int doMain(String[] args) {
-		try (ConfigurableApplicationContext appctx = SpringApplication.run(Main.class, args)) {
+		try (var appctx = SpringApplication.run(Main.class, args)) {
 			return SpringApplication.exit(appctx);
 		}
 	}

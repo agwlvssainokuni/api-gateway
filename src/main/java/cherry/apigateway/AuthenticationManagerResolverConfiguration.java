@@ -24,7 +24,6 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.ReactiveAuthenticationManagerResolver;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtIssuerReactiveAuthenticationManagerResolver;
 import org.springframework.security.oauth2.server.resource.authentication.JwtReactiveAuthenticationManager;
 import org.springframework.web.server.ServerWebExchange;
@@ -32,10 +31,6 @@ import org.springframework.web.server.ServerWebExchange;
 import com.azure.spring.cloud.autoconfigure.aad.AadTrustedIssuerRepository;
 import com.azure.spring.cloud.autoconfigure.aadb2c.AadB2cResourceServerAutoConfiguration;
 import com.azure.spring.cloud.autoconfigure.aadb2c.properties.AadB2cProperties;
-import com.nimbusds.jose.proc.SecurityContext;
-import com.nimbusds.jose.util.ResourceRetriever;
-import com.nimbusds.jwt.proc.JWTClaimsSetAwareJWSKeySelector;
-import com.nimbusds.jwt.proc.JWTProcessor;
 
 import reactor.core.publisher.Mono;
 
@@ -71,19 +66,19 @@ public class AuthenticationManagerResolverConfiguration {
 		 * インスタンスを、AadB2cResourceServerAutoConfiguration を自分で呼び出して
 		 * 形成する。
 		 */
-		AadB2cResourceServerAutoConfiguration cfg = new AadB2cResourceServerAutoConfiguration(new AadB2cProperties(), new RestTemplateBuilder());
+		AadB2cResourceServerAutoConfiguration cfg = new AadB2cResourceServerAutoConfiguration(
+				new AadB2cProperties(), new RestTemplateBuilder());
 
-		AadTrustedIssuerRepository trustedIssuerRepository = new AadTrustedIssuerRepository("dummy");
-		for (IssuerEntry entry : issuerMap) {
+		var trustedIssuerRepository = new AadTrustedIssuerRepository("dummy");
+		for (var entry : issuerMap) {
 			trustedIssuerRepository.addTrustedIssuer(entry.getIssuer());
 			trustedIssuerRepository.addSpecialOidcIssuerLocationMap(entry.getIssuer(), entry.getOidcIssuerLocation());
 		}
 
-		ResourceRetriever resourceRetriever = cfg.jwtResourceRetriever();
-		JWTClaimsSetAwareJWSKeySelector<SecurityContext> keySelector = cfg
-				.aadIssuerJwsKeySelector(trustedIssuerRepository, resourceRetriever);
-		JWTProcessor<SecurityContext> jwtProcessor = cfg.jwtProcessor(keySelector);
-		JwtDecoder jwtDecoder = cfg.jwtDecoder(jwtProcessor, trustedIssuerRepository);
+		var resourceRetriever = cfg.jwtResourceRetriever();
+		var keySelector = cfg.aadIssuerJwsKeySelector(trustedIssuerRepository, resourceRetriever);
+		var jwtProcessor = cfg.jwtProcessor(keySelector);
+		var jwtDecoder = cfg.jwtDecoder(jwtProcessor, trustedIssuerRepository);
 
 		var authenticationManager = new JwtReactiveAuthenticationManager(
 				token -> Mono.just(token).map(jwtDecoder::decode));
