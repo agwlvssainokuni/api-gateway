@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.ReactiveAuthenticationManagerResolver;
@@ -32,6 +33,7 @@ import com.azure.spring.cloud.autoconfigure.aad.AadTrustedIssuerRepository;
 import com.azure.spring.cloud.autoconfigure.aadb2c.AadB2cResourceServerAutoConfiguration;
 import com.azure.spring.cloud.autoconfigure.aadb2c.properties.AadB2cProperties;
 import com.nimbusds.jose.proc.SecurityContext;
+import com.nimbusds.jose.util.ResourceRetriever;
 import com.nimbusds.jwt.proc.JWTClaimsSetAwareJWSKeySelector;
 import com.nimbusds.jwt.proc.JWTProcessor;
 
@@ -69,7 +71,7 @@ public class AuthenticationManagerResolverConfiguration {
 		 * インスタンスを、AadB2cResourceServerAutoConfiguration を自分で呼び出して
 		 * 形成する。
 		 */
-		AadB2cResourceServerAutoConfiguration cfg = new AadB2cResourceServerAutoConfiguration(new AadB2cProperties());
+		AadB2cResourceServerAutoConfiguration cfg = new AadB2cResourceServerAutoConfiguration(new AadB2cProperties(), new RestTemplateBuilder());
 
 		AadTrustedIssuerRepository trustedIssuerRepository = new AadTrustedIssuerRepository("dummy");
 		for (IssuerEntry entry : issuerMap) {
@@ -77,8 +79,9 @@ public class AuthenticationManagerResolverConfiguration {
 			trustedIssuerRepository.addSpecialOidcIssuerLocationMap(entry.getIssuer(), entry.getOidcIssuerLocation());
 		}
 
+		ResourceRetriever resourceRetriever = cfg.jwtResourceRetriever();
 		JWTClaimsSetAwareJWSKeySelector<SecurityContext> keySelector = cfg
-				.aadIssuerJwsKeySelector(trustedIssuerRepository);
+				.aadIssuerJwsKeySelector(trustedIssuerRepository, resourceRetriever);
 		JWTProcessor<SecurityContext> jwtProcessor = cfg.jwtProcessor(keySelector);
 		JwtDecoder jwtDecoder = cfg.jwtDecoder(jwtProcessor, trustedIssuerRepository);
 
