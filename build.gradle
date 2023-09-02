@@ -26,7 +26,7 @@ dependencyManagement {
     imports {
         mavenBom "org.springframework.boot:spring-boot-dependencies:3.1.3"
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:2022.0.4"
-        mavenBom "com.azure.spring:spring-cloud-azure-dependencies:5.0.0"
+        mavenBom "com.azure.spring:spring-cloud-azure-dependencies:5.5.0"
     }
     dependencies {
         dependency "org.apache.commons:commons-collections4:4.4"
