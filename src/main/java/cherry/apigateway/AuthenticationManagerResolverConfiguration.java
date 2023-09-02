@@ -16,6 +16,7 @@
 
 package cherry.apigateway;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -24,13 +25,18 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.ReactiveAuthenticationManagerResolver;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtIssuerReactiveAuthenticationManagerResolver;
 import org.springframework.security.oauth2.server.resource.authentication.JwtReactiveAuthenticationManager;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.azure.spring.cloud.autoconfigure.aad.AadTrustedIssuerRepository;
-import com.azure.spring.cloud.autoconfigure.aadb2c.AadB2cResourceServerAutoConfiguration;
-import com.azure.spring.cloud.autoconfigure.aadb2c.properties.AadB2cProperties;
+import com.azure.spring.cloud.autoconfigure.implementation.aad.security.jose.RestOperationsResourceRetriever;
+import com.azure.spring.cloud.autoconfigure.implementation.aad.security.jwt.AadIssuerJwsKeySelector;
+import com.azure.spring.cloud.autoconfigure.implementation.aad.security.jwt.AadJwtIssuerValidator;
+import com.azure.spring.cloud.autoconfigure.implementation.aad.security.jwt.AadTrustedIssuerRepository;
+import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 
 import reactor.core.publisher.Mono;
 
@@ -63,11 +69,8 @@ public class AuthenticationManagerResolverConfiguration {
 		/*
 		 * Reactive のときは AadB2cResourceServerAutoConfiguration が構成されない。
 		 * そのため AD B2C 向けの ReactiveAuthenticationManagerResolver に必要な
-		 * インスタンスを、AadB2cResourceServerAutoConfiguration を自分で呼び出して
-		 * 形成する。
+		 * インスタンスを、AadB2cResourceServerAutoConfiguration に倣って自分で形成する。
 		 */
-		AadB2cResourceServerAutoConfiguration cfg = new AadB2cResourceServerAutoConfiguration(
-				new AadB2cProperties(), new RestTemplateBuilder());
 
 		var trustedIssuerRepository = new AadTrustedIssuerRepository("dummy");
 		for (var entry : issuerMap) {
@@ -75,10 +78,15 @@ public class AuthenticationManagerResolverConfiguration {
 			trustedIssuerRepository.addSpecialOidcIssuerLocationMap(entry.getIssuer(), entry.getOidcIssuerLocation());
 		}
 
-		var resourceRetriever = cfg.jwtResourceRetriever();
-		var keySelector = cfg.aadIssuerJwsKeySelector(trustedIssuerRepository, resourceRetriever);
-		var jwtProcessor = cfg.jwtProcessor(keySelector);
-		var jwtDecoder = cfg.jwtDecoder(jwtProcessor, trustedIssuerRepository);
+		var restTemplateBuilder = new RestTemplateBuilder();
+		var resourceRetriever = new RestOperationsResourceRetriever(restTemplateBuilder);
+		var keySelector = new AadIssuerJwsKeySelector(restTemplateBuilder, trustedIssuerRepository, resourceRetriever);
+		var jwtProcessor = new DefaultJWTProcessor<>();
+		jwtProcessor.setJWTClaimsSetAwareJWSKeySelector(keySelector);
+		var jwtDecoder = new NimbusJwtDecoder(jwtProcessor);
+		jwtDecoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(Arrays.asList(
+				new AadJwtIssuerValidator(trustedIssuerRepository),
+				new JwtTimestampValidator())));
 
 		var authenticationManager = new JwtReactiveAuthenticationManager(
 				token -> Mono.just(token).map(jwtDecoder::decode));

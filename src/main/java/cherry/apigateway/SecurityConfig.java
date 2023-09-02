@@ -35,7 +35,8 @@ public class SecurityConfig {
 
 		http.oauth2ResourceServer(oauth2 -> {
 			if (resolver == null) {
-				oauth2.jwt();
+				oauth2.jwt(jwtSpec -> {
+				});
 			} else {
 				oauth2.authenticationManagerResolver(resolver);
 			}
