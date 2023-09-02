@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 agwlvssainokuni
+ * Copyright 2022,2023 agwlvssainokuni
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package cherry.apigateway;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.ReactiveAuthenticationManagerResolver;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -25,6 +26,7 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.server.ServerWebExchange;
 
+@Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
