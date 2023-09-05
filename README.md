@@ -22,14 +22,14 @@ spring.cloud.gateway.routes[0].uri=http://localhost:8081/
 spring.cloud.gateway.routes[0].predicates[0]=Path=/prvapi/**
 spring.cloud.gateway.routes[0].filters[0]=StripPrefix=1
 spring.cloud.gateway.routes[0].filters[1]=RemoveRequestHeader=Authorization
-spring.cloud.gateway.routes[0].filters[2]=AddRequestHeaderFromJwt=X-JWT-SUB, sub
+spring.cloud.gateway.routes[0].filters[2]=SetRequestHeaderFromJwt=X-JWT-SUB, sub
 
 spring.cloud.gateway.routes[1].id=pubapi
 spring.cloud.gateway.routes[1].uri=http://localhost:8081/
 spring.cloud.gateway.routes[1].predicates[0]=Path=/pubapi/**
 spring.cloud.gateway.routes[1].filters[0]=StripPrefix=1
 spring.cloud.gateway.routes[1].filters[1]=RemoveRequestHeader=Authorization
-spring.cloud.gateway.routes[1].filters[2]=AddRequestHeaderFromJwt=X-JWT-SUB, sub
+spring.cloud.gateway.routes[1].filters[2]=SetRequestHeaderFromJwt=X-JWT-SUB, sub
 ```
 
 ### クレーム値を実APIへ受け渡す `GatewayFilterFactory`

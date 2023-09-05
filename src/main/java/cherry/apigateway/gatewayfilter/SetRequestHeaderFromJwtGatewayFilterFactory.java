@@ -32,10 +32,10 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 @Component
-public class AddRequestHeaderFromJwtGatewayFilterFactory
-        extends AbstractGatewayFilterFactory<AddRequestHeaderFromJwtGatewayFilterFactory.Config> {
+public class SetRequestHeaderFromJwtGatewayFilterFactory
+        extends AbstractGatewayFilterFactory<SetRequestHeaderFromJwtGatewayFilterFactory.Config> {
 
-    public AddRequestHeaderFromJwtGatewayFilterFactory() {
+    public SetRequestHeaderFromJwtGatewayFilterFactory() {
         super(Config.class);
     }
 
