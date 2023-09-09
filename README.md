@@ -12,7 +12,7 @@
 ## API Gatewayの構成のポイント
 ### 認証プロバイダ設定
 ```
-spring.security.oauth2.resourceserver.jwt.issuer-uri=http://localhost:8080/auth/realms/mydemo
+spring.security.oauth2.resourceserver.jwt.issuer-uri=http://localhost:8080/realms/mydemo
 ```
 
 ### 実APIへのルーティング設定
@@ -65,20 +65,22 @@ docker compose up -d
 
 ## Keycloakを初期設定する
 ### ログイン
-* [Keycloak(http://localhost:8080/auth/)](http://localhost:8080/auth/) を開く。
+* [Keycloak(http://localhost:8080/admin/)](http://localhost:8080/admin/) を開く。
 * 管理コンソール (Administration Console) のリンクをクリックする。
 * ログインする。(`admin/password`)
 
 ### レルム
 * レルム `mydemo` を作成する。
-  * [OpenID Connect Discovery](http://localhost:8080/auth/realms/mydemo/.well-known/openid-configuration)
+  * Configure - Realm settings - [OpenID Endpoint Configuration](http://localhost:8080/realms/mydemo/.well-known/openid-configuration)
 
 ### クライアント
 * クライアント `cloudgateway` を作成する。
-  * Client Protocol: `openid-connect`
-  * Root URL: `http://localhost:8090/`
-* クライアント `cloudgateway` を設定変更する。
-  * Access Type: `confidential`
+  * General Settings
+    * Client Type: `OpenID Connect`
+  * Capability config
+    * Client authentication: `On`
+  * Login settings
+    * Root URL: `http://localhost:8090/`
 * クライアント `cloudgateway` のクライアントシークレットを確認する。(あとで使う)
 
 ### ユーザ
@@ -114,7 +116,7 @@ clientsecret={Keycloakの画面で確認したクライアントシークレッ�
 username=user001
 password={user001のパスワード}
 
-json=$(curl http://localhost:8080/auth/realms/mydemo/protocol/openid-connect/token \
+json=$(curl http://localhost:8080/realms/mydemo/protocol/openid-connect/token \
         --data username=${username} \
         --data password=${password} \
         --data grant_type=password \
@@ -136,12 +138,11 @@ curl -v http://localhost:8090/pubapi/anything
 #### 結果例
 ```
 $ curl -v http://localhost:8090/pubapi/anything
-*   Trying ::1...
-* TCP_NODELAY set
-* Connected to localhost (::1) port 8090 (#0)
+*   Trying 127.0.0.1:8090...
+* Connected to localhost (127.0.0.1) port 8090 (#0)
 > GET /pubapi/anything HTTP/1.1
 > Host: localhost:8090
-> User-Agent: curl/7.64.1
+> User-Agent: curl/8.1.2
 > Accept: */*
 > 
 < HTTP/1.1 200 OK
@@ -149,17 +150,17 @@ $ curl -v http://localhost:8090/pubapi/anything
 < Vary: Access-Control-Request-Method
 < Vary: Access-Control-Request-Headers
 < Server: gunicorn/19.9.0
-< Date: Sun, 24 Jul 2022 13:13:45 GMT
+< Date: Sat, 09 Sep 2023 12:23:03 GMT
 < Content-Type: application/json
+< Content-Length: 464
 < Access-Control-Allow-Origin: *
 < Access-Control-Allow-Credentials: true
-< content-length: 479
 < Cache-Control: no-cache, no-store, max-age=0, must-revalidate
 < Pragma: no-cache
 < Expires: 0
 < X-Content-Type-Options: nosniff
 < X-Frame-Options: DENY
-< X-XSS-Protection: 1 ; mode=block
+< X-XSS-Protection: 0
 < Referrer-Policy: no-referrer
 < 
 {
@@ -170,19 +171,18 @@ $ curl -v http://localhost:8090/pubapi/anything
   "headers": {
     "Accept": "*/*", 
     "Content-Length": "0", 
-    "Forwarded": "proto=http;host=\"localhost:8090\";for=\"[0:0:0:0:0:0:0:1]:55777\"", 
+    "Forwarded": "proto=http;host=\"localhost:8090\";for=\"127.0.0.1:50171\"", 
     "Host": "localhost:8081", 
-    "User-Agent": "curl/7.64.1", 
+    "User-Agent": "curl/8.1.2", 
     "X-Forwarded-Host": "localhost:8090", 
     "X-Forwarded-Prefix": "/pubapi"
   }, 
   "json": null, 
   "method": "GET", 
-  "origin": "0:0:0:0:0:0:0:1", 
+  "origin": "127.0.0.1", 
   "url": "http://localhost:8090/anything"
 }
 * Connection #0 to host localhost left intact
-* Closing connection 0
 ```
 
 ### アクセストークン指定あり
@@ -194,12 +194,11 @@ curl -v http://localhost:8090/pubapi/anything -H "Authorization: Bearer ${token}
 #### 結果例
 ```
 $ curl -v http://localhost:8090/pubapi/anything -H "Authorization: Bearer ${token}"
-*   Trying ::1...
-* TCP_NODELAY set
-* Connected to localhost (::1) port 8090 (#0)
+*   Trying 127.0.0.1:8090...
+* Connected to localhost (127.0.0.1) port 8090 (#0)
 > GET /pubapi/anything HTTP/1.1
 > Host: localhost:8090
-> User-Agent: curl/7.64.1
+> User-Agent: curl/8.1.2
 > Accept: */*
 > Authorization: Bearer {略}
 > 
@@ -208,17 +207,17 @@ $ curl -v http://localhost:8090/pubapi/anything -H "Authorization: Bearer ${toke
 < Vary: Access-Control-Request-Method
 < Vary: Access-Control-Request-Headers
 < Server: gunicorn/19.9.0
-< Date: Sun, 24 Jul 2022 13:14:52 GMT
+< Date: Sat, 09 Sep 2023 12:23:28 GMT
 < Content-Type: application/json
+< Content-Length: 522
 < Access-Control-Allow-Origin: *
 < Access-Control-Allow-Credentials: true
-< content-length: 537
 < Cache-Control: no-cache, no-store, max-age=0, must-revalidate
 < Pragma: no-cache
 < Expires: 0
 < X-Content-Type-Options: nosniff
 < X-Frame-Options: DENY
-< X-XSS-Protection: 1 ; mode=block
+< X-XSS-Protection: 0
 < Referrer-Policy: no-referrer
 < 
 {
@@ -229,20 +228,19 @@ $ curl -v http://localhost:8090/pubapi/anything -H "Authorization: Bearer ${toke
   "headers": {
     "Accept": "*/*", 
     "Content-Length": "0", 
-    "Forwarded": "proto=http;host=\"localhost:8090\";for=\"[0:0:0:0:0:0:0:1]:55803\"", 
+    "Forwarded": "proto=http;host=\"localhost:8090\";for=\"127.0.0.1:50173\"", 
     "Host": "localhost:8081", 
-    "User-Agent": "curl/7.64.1", 
+    "User-Agent": "curl/8.1.2", 
     "X-Forwarded-Host": "localhost:8090", 
     "X-Forwarded-Prefix": "/pubapi", 
-    "X-Jwt-Sub": "b16d2eb5-901c-4d80-ae1e-2ea99f9df931"
+    "X-Jwt-Sub": "2d60d01b-8071-40e4-a96b-e5ad65944771"
   }, 
   "json": null, 
   "method": "GET", 
-  "origin": "0:0:0:0:0:0:0:1", 
+  "origin": "127.0.0.1", 
   "url": "http://localhost:8090/anything"
 }
 * Connection #0 to host localhost left intact
-* Closing connection 0
 ```
 
 ## 認証要APIへリクエストを発行する
@@ -254,30 +252,25 @@ curl -v http://localhost:8090/prvapi/anything
 #### 結果例
 ```
 $ curl -v http://localhost:8090/prvapi/anything
-*   Trying ::1...
-* TCP_NODELAY set
-* Connected to localhost (::1) port 8090 (#0)
+*   Trying 127.0.0.1:8090...
+* Connected to localhost (127.0.0.1) port 8090 (#0)
 > GET /prvapi/anything HTTP/1.1
 > Host: localhost:8090
-> User-Agent: curl/7.64.1
+> User-Agent: curl/8.1.2
 > Accept: */*
 > 
 < HTTP/1.1 401 Unauthorized
-< Vary: Origin
-< Vary: Access-Control-Request-Method
-< Vary: Access-Control-Request-Headers
 < WWW-Authenticate: Bearer
 < Cache-Control: no-cache, no-store, max-age=0, must-revalidate
 < Pragma: no-cache
 < Expires: 0
 < X-Content-Type-Options: nosniff
 < X-Frame-Options: DENY
-< X-XSS-Protection: 1 ; mode=block
+< X-XSS-Protection: 0
 < Referrer-Policy: no-referrer
 < content-length: 0
 < 
 * Connection #0 to host localhost left intact
-* Closing connection 0
 ```
 
 ### アクセストークン指定あり
@@ -288,12 +281,11 @@ curl -v http://localhost:8090/prvapi/anything -H "Authorization: Bearer ${token}
 #### 結果例
 ```
 $ curl -v http://localhost:8090/prvapi/anything -H "Authorization: Bearer ${token}"
-*   Trying ::1...
-* TCP_NODELAY set
-* Connected to localhost (::1) port 8090 (#0)
+*   Trying 127.0.0.1:8090...
+* Connected to localhost (127.0.0.1) port 8090 (#0)
 > GET /prvapi/anything HTTP/1.1
 > Host: localhost:8090
-> User-Agent: curl/7.64.1
+> User-Agent: curl/8.1.2
 > Accept: */*
 > Authorization: Bearer {略}
 > 
@@ -302,17 +294,17 @@ $ curl -v http://localhost:8090/prvapi/anything -H "Authorization: Bearer ${toke
 < Vary: Access-Control-Request-Method
 < Vary: Access-Control-Request-Headers
 < Server: gunicorn/19.9.0
-< Date: Sun, 24 Jul 2022 13:16:20 GMT
+< Date: Sat, 09 Sep 2023 12:24:41 GMT
 < Content-Type: application/json
+< Content-Length: 522
 < Access-Control-Allow-Origin: *
 < Access-Control-Allow-Credentials: true
-< content-length: 537
 < Cache-Control: no-cache, no-store, max-age=0, must-revalidate
 < Pragma: no-cache
 < Expires: 0
 < X-Content-Type-Options: nosniff
 < X-Frame-Options: DENY
-< X-XSS-Protection: 1 ; mode=block
+< X-XSS-Protection: 0
 < Referrer-Policy: no-referrer
 < 
 {
@@ -323,20 +315,19 @@ $ curl -v http://localhost:8090/prvapi/anything -H "Authorization: Bearer ${toke
   "headers": {
     "Accept": "*/*", 
     "Content-Length": "0", 
-    "Forwarded": "proto=http;host=\"localhost:8090\";for=\"[0:0:0:0:0:0:0:1]:55813\"", 
+    "Forwarded": "proto=http;host=\"localhost:8090\";for=\"127.0.0.1:50176\"", 
     "Host": "localhost:8081", 
-    "User-Agent": "curl/7.64.1", 
+    "User-Agent": "curl/8.1.2", 
     "X-Forwarded-Host": "localhost:8090", 
     "X-Forwarded-Prefix": "/prvapi", 
-    "X-Jwt-Sub": "b16d2eb5-901c-4d80-ae1e-2ea99f9df931"
+    "X-Jwt-Sub": "2d60d01b-8071-40e4-a96b-e5ad65944771"
   }, 
   "json": null, 
   "method": "GET", 
-  "origin": "0:0:0:0:0:0:0:1", 
+  "origin": "127.0.0.1", 
   "url": "http://localhost:8090/anything"
 }
 * Connection #0 to host localhost left intact
-* Closing connection 0
 ```
 
 ## 動作確認用コンテナ(Keycloak, httpbin.org)を停止する
