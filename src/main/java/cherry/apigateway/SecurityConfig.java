@@ -35,6 +35,10 @@ public class SecurityConfig {
 			@Autowired(required = false) ReactiveAuthenticationManagerResolver<ServerWebExchange> resolver)
 			throws Exception {
 
+		http.csrf(csrf -> {
+			csrf.disable();
+		});
+
 		http.oauth2ResourceServer(oauth2 -> {
 			if (resolver == null) {
 				oauth2.jwt(jwtSpec -> {
