@@ -1,5 +1,5 @@
 /*
- * Copyright 2022,2023 agwlvssainokuni
+ * Copyright 2022,2024 agwlvssainokuni
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@
 
 package cherry.apigateway.gatewayfilter;
 
-import java.util.Arrays;
 import java.util.List;
-
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -28,65 +26,49 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
-
 import reactor.core.publisher.Mono;
 
 @Component
 public class SetRequestHeaderFromJwtGatewayFilterFactory
-        extends AbstractGatewayFilterFactory<SetRequestHeaderFromJwtGatewayFilterFactory.Config> {
+    extends AbstractGatewayFilterFactory<SetRequestHeaderFromJwtGatewayFilterFactory.Config> {
 
     public SetRequestHeaderFromJwtGatewayFilterFactory() {
         super(Config.class);
     }
 
+    @SuppressWarnings("null")
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> ReactiveSecurityContextHolder.getContext()
-                // JWTクレームを取得する。
-                .map(SecurityContext::getAuthentication).map(Authentication::getPrincipal)
-                .filter(Jwt.class::isInstance).map(Jwt.class::cast)
-                .map(jwt -> jwt.getClaimAsString(config.getClaim()))
-                // JWTクレームをリクエストヘッダへ設定する。
-                .flatMap(claim -> Mono.just(exchange).map(ServerWebExchange::getRequest)
-                        .map(ServerHttpRequest::mutate)
-                        .map(req -> req.header(config.getHeader(), claim))
-                        .map(ServerHttpRequest.Builder::build))
-                // リクエストを更新する。
-                .flatMap(req -> Mono.just(exchange)
-                        .map(ServerWebExchange::mutate)
-                        .map(exchg -> exchg.request(req))
-                        .map(ServerWebExchange.Builder::build))
-                // JWTクレームが存在しない場合はリクエストを更新しない。
-                .switchIfEmpty(Mono.just(exchange))
-                // フィルタ処理を進める。
-                .flatMap(chain::filter);
+            // JWTクレームを取得する。
+            .map(SecurityContext::getAuthentication).map(Authentication::getPrincipal)
+            .filter(Jwt.class::isInstance).map(Jwt.class::cast)
+            .map(jwt -> jwt.getClaimAsString(config.claim()))
+            // JWTクレームをリクエストヘッダへ設定する。
+            .flatMap(claim -> Mono.just(exchange).map(ServerWebExchange::getRequest)
+                .map(ServerHttpRequest::mutate)
+                .map(req -> req.header(config.header(), claim))
+                .map(ServerHttpRequest.Builder::build))
+            // リクエストを更新する。
+            .flatMap(req -> Mono.just(exchange)
+                .map(ServerWebExchange::mutate)
+                .map(exchg -> exchg.request(req))
+                .map(ServerWebExchange.Builder::build))
+            // JWTクレームが存在しない場合はリクエストを更新しない。
+            .switchIfEmpty(Mono.just(exchange))
+            // フィルタ処理を進める。
+            .flatMap(chain::filter);
     }
 
     @Override
     public List<String> shortcutFieldOrder() {
-        return Arrays.asList("header", "claim");
+        return List.of("header", "claim");
     }
 
-    public static class Config {
-
-        private String header;
-        private String claim;
-
-        public String getHeader() {
-            return header;
-        }
-
-        public void setHeader(String header) {
-            this.header = header;
-        }
-
-        public String getClaim() {
-            return claim;
-        }
-
-        public void setClaim(String claim) {
-            this.claim = claim;
-        }
+    public static record Config(
+        String header,
+        String claim //
+    ) {
     }
 
 }

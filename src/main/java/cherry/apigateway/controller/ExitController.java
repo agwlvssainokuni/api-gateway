@@ -1,5 +1,5 @@
 /*
- * Copyright 2022,2023 agwlvssainokuni
+ * Copyright 2022,2024 agwlvssainokuni
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,27 +26,28 @@ import reactor.core.publisher.Mono;
 @RestController
 public class ExitController implements ExitCodeGenerator {
 
-	private Integer exitCode = null;
+    private Integer exitCode = null;
 
-	@RequestMapping("/exit")
-	public synchronized Mono<Integer> setExitCode(@RequestParam(value = "code", defaultValue = "0") int code) {
-		this.exitCode = Integer.valueOf(code);
-		notifyAll();
-		return Mono.just(this.exitCode);
-	}
+    @RequestMapping("/exit")
+    public synchronized Mono<Integer> setExitCode(
+        @RequestParam(value = "code", defaultValue = "0") int code) {
+        this.exitCode = Integer.valueOf(code);
+        notifyAll();
+        return Mono.just(this.exitCode);
+    }
 
-	@Override
-	public synchronized int getExitCode() {
-		while (true) {
-			if (exitCode != null) {
-				return exitCode.intValue();
-			}
-			try {
-				wait();
-			} catch (InterruptedException ex) {
-				// NOTHING TO DO
-			}
-		}
-	}
+    @Override
+    public synchronized int getExitCode() {
+        while (true) {
+            if (exitCode != null) {
+                return exitCode.intValue();
+            }
+            try {
+                wait();
+            } catch (InterruptedException ex) {
+                // NOTHING TO DO
+            }
+        }
+    }
 
 }

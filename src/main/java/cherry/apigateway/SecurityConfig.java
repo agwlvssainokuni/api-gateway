@@ -1,5 +1,5 @@
 /*
- * Copyright 2022,2023 agwlvssainokuni
+ * Copyright 2022,2024 agwlvssainokuni
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,43 +30,44 @@ import org.springframework.web.server.ServerWebExchange;
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
-	@Bean
-	public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http,
-			@Autowired(required = false) ReactiveAuthenticationManagerResolver<ServerWebExchange> resolver)
-			throws Exception {
+    @Bean
+    public SecurityWebFilterChain securityFilterChain(
+        ServerHttpSecurity http,
+        @Autowired(required = false) ReactiveAuthenticationManagerResolver<ServerWebExchange> resolver //
+    ) throws Exception {
 
-		http.csrf(csrf -> {
-			csrf.disable();
-		});
+        http.csrf(csrf -> {
+            csrf.disable();
+        });
 
-		http.oauth2ResourceServer(oauth2 -> {
-			if (resolver == null) {
-				oauth2.jwt(jwtSpec -> {
-				});
-			} else {
-				oauth2.authenticationManagerResolver(resolver);
-			}
-		});
+        http.oauth2ResourceServer(oauth2 -> {
+            if (resolver == null) {
+                oauth2.jwt(jwtSpec -> {
+                });
+            } else {
+                oauth2.authenticationManagerResolver(resolver);
+            }
+        });
 
-		http.authorizeExchange(authz -> {
+        http.authorizeExchange(authz -> {
 
-			// CORSはSpring Cloud Gatewayのglobalcors設定で処理することとする。
-			// そのためにSpring SecurityがOPTIONSメソッドをスルーするよう構成する。
-			// (前段のSpring Securityはアクセス許可し、後段のSpring Cloud Gateway
-			// で処理する)
-			// Spring SecurityはSpring Cloud Gatewayよりも前段階で実行されるため
-			// この構成がないと「Spring Cloud Gatewayへ到達する前にSpring Security
-			// によりアクセス拒否される」ことがありうる。
-			authz.pathMatchers(HttpMethod.OPTIONS).permitAll();
+            // CORSはSpring Cloud Gatewayのglobalcors設定で処理することとする。
+            // そのためにSpring SecurityがOPTIONSメソッドをスルーするよう構成する。
+            // (前段のSpring Securityはアクセス許可し、後段のSpring Cloud Gateway
+            // で処理する)
+            // Spring SecurityはSpring Cloud Gatewayよりも前段階で実行されるため
+            // この構成がないと「Spring Cloud Gatewayへ到達する前にSpring Security
+            // によりアクセス拒否される」ことがありうる。
+            authz.pathMatchers(HttpMethod.OPTIONS).permitAll();
 
-			authz.pathMatchers("/prvapi/**")
-					.authenticated();
-			authz.pathMatchers("/pubapi/**")
-					.permitAll();
-			authz.anyExchange().permitAll();
-		});
+            authz.pathMatchers("/prvapi/**")
+                .authenticated();
+            authz.pathMatchers("/pubapi/**")
+                .permitAll();
+            authz.anyExchange().permitAll();
+        });
 
-		return http.build();
-	}
+        return http.build();
+    }
 
 }
