@@ -55,7 +55,7 @@ public class AuthenticationManagerResolverConfiguration {
     @Bean
     @ConditionalOnProperty(name = "cherry.api-gateway.resolver-type", havingValue = "multitenant")
     public ReactiveAuthenticationManagerResolver<ServerWebExchange> multitenantAuthenticationManagerResolver() {
-        return new JwtIssuerReactiveAuthenticationManagerResolver(issuerList);
+        return JwtIssuerReactiveAuthenticationManagerResolver.fromTrustedIssuers(issuerList);
     }
 
     @Bean
