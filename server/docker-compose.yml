@@ -2,6 +2,7 @@ version: '3'
 services:
   keycloak:
     image: keycloak/keycloak
+    user: root
     ports:
       - '8080:8080'
     environment:
