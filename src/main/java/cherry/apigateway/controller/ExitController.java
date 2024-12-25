@@ -20,7 +20,6 @@ import org.springframework.boot.ExitCodeGenerator;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -30,8 +29,9 @@ public class ExitController implements ExitCodeGenerator {
 
     @RequestMapping("/exit")
     public synchronized Mono<Integer> setExitCode(
-        @RequestParam(value = "code", defaultValue = "0") int code) {
-        this.exitCode = Integer.valueOf(code);
+            @RequestParam(value = "code", defaultValue = "0") int code
+    ) {
+        this.exitCode = code;
         notifyAll();
         return Mono.just(this.exitCode);
     }
@@ -40,7 +40,7 @@ public class ExitController implements ExitCodeGenerator {
     public synchronized int getExitCode() {
         while (true) {
             if (exitCode != null) {
-                return exitCode.intValue();
+                return exitCode;
             }
             try {
                 wait();

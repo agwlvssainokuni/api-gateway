@@ -32,13 +32,11 @@ public class SecurityConfig {
 
     @Bean
     public SecurityWebFilterChain securityFilterChain(
-        ServerHttpSecurity http,
-        @Autowired(required = false) ReactiveAuthenticationManagerResolver<ServerWebExchange> resolver //
-    ) throws Exception {
+            ServerHttpSecurity http,
+            @Autowired(required = false) ReactiveAuthenticationManagerResolver<ServerWebExchange> resolver
+    ) {
 
-        http.csrf(csrf -> {
-            csrf.disable();
-        });
+        http.csrf(ServerHttpSecurity.CsrfSpec::disable);
 
         http.oauth2ResourceServer(oauth2 -> {
             if (resolver == null) {
@@ -61,9 +59,9 @@ public class SecurityConfig {
             authz.pathMatchers(HttpMethod.OPTIONS).permitAll();
 
             authz.pathMatchers("/prvapi/**")
-                .authenticated();
+                    .authenticated();
             authz.pathMatchers("/pubapi/**")
-                .permitAll();
+                    .permitAll();
             authz.anyExchange().permitAll();
         });
 

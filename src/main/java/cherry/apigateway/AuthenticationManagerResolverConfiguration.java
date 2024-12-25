@@ -16,7 +16,11 @@
 
 package cherry.apigateway;
 
-import java.util.List;
+import com.azure.spring.cloud.autoconfigure.implementation.aad.security.jose.RestOperationsResourceRetriever;
+import com.azure.spring.cloud.autoconfigure.implementation.aad.security.jwt.AadIssuerJwsKeySelector;
+import com.azure.spring.cloud.autoconfigure.implementation.aad.security.jwt.AadJwtIssuerValidator;
+import com.azure.spring.cloud.autoconfigure.implementation.aad.security.jwt.AadTrustedIssuerRepository;
+import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -29,12 +33,9 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtIssuerReactiveAuthenticationManagerResolver;
 import org.springframework.security.oauth2.server.resource.authentication.JwtReactiveAuthenticationManager;
 import org.springframework.web.server.ServerWebExchange;
-import com.azure.spring.cloud.autoconfigure.implementation.aad.security.jose.RestOperationsResourceRetriever;
-import com.azure.spring.cloud.autoconfigure.implementation.aad.security.jwt.AadIssuerJwsKeySelector;
-import com.azure.spring.cloud.autoconfigure.implementation.aad.security.jwt.AadJwtIssuerValidator;
-import com.azure.spring.cloud.autoconfigure.implementation.aad.security.jwt.AadTrustedIssuerRepository;
-import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Configuration
 @ConfigurationProperties(prefix = "cherry.api-gateway")
@@ -72,10 +73,18 @@ public class AuthenticationManagerResolverConfiguration {
         for (var entry : issuerMap) {
             trustedIssuerRepository.addTrustedIssuer(entry.issuer());
             trustedIssuerRepository.addSpecialOidcIssuerLocationMap(
-                entry.issuer(),
-                entry.oidcIssuerLocation());
+                    entry.issuer(),
+                    entry.oidcIssuerLocation());
         }
 
+        var jwtDecoder = getJwtDecoder(trustedIssuerRepository);
+
+        var authenticationManager = new JwtReactiveAuthenticationManager(
+                token -> Mono.just(token).map(jwtDecoder::decode));
+        return exchange -> Mono.just(authenticationManager);
+    }
+
+    private NimbusJwtDecoder getJwtDecoder(AadTrustedIssuerRepository trustedIssuerRepository) {
         var restTemplateBuilder = new RestTemplateBuilder();
         var resourceRetriever = new RestOperationsResourceRetriever(restTemplateBuilder);
         var keySelector = new AadIssuerJwsKeySelector(restTemplateBuilder, trustedIssuerRepository, resourceRetriever);
@@ -83,17 +92,14 @@ public class AuthenticationManagerResolverConfiguration {
         jwtProcessor.setJWTClaimsSetAwareJWSKeySelector(keySelector);
         var jwtDecoder = new NimbusJwtDecoder(jwtProcessor);
         jwtDecoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(List.of(
-            new AadJwtIssuerValidator(trustedIssuerRepository),
-            new JwtTimestampValidator())));
-
-        var authenticationManager = new JwtReactiveAuthenticationManager(
-            token -> Mono.just(token).map(jwtDecoder::decode));
-        return exchange -> Mono.just(authenticationManager);
+                new AadJwtIssuerValidator(trustedIssuerRepository),
+                new JwtTimestampValidator())));
+        return jwtDecoder;
     }
 
-    public static record IssuerEntry(
-        String issuer,
-        String oidcIssuerLocation //
+    public record IssuerEntry(
+            String issuer,
+            String oidcIssuerLocation //
     ) {
     }
 
